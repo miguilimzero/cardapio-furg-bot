@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/tebeka/selenium"
+	"github.com/tebeka/selenium/chrome"
 
 	"image/png"
 	_ "image/png" // force import the png decoder
@@ -73,6 +74,15 @@ func takeScreenshot(filename string, url string) {
 
 	// connect to the WebDriver instance running locally
 	caps := selenium.Capabilities{"browserName": "chrome"}
+	chromeCaps := chrome.Capabilities{
+		Path: "",
+		Args: []string{
+			"--headless",
+			"--no-sandbox",
+		},
+	}
+	caps.AddChrome(chromeCaps)
+
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
 	if err != nil {
 		log.Fatal(err)
