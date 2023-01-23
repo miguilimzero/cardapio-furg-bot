@@ -79,6 +79,7 @@ func takeScreenshot(filename string, url string) {
 		Args: []string{
 			"--headless",
 			"--no-sandbox",
+			"--window-size=1920,1080", // This fix a bug with --headless mode
 		},
 	}
 	caps.AddChrome(chromeCaps)
