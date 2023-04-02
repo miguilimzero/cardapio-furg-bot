@@ -6,12 +6,15 @@ import (
 	"image"
 	"log"
 	"os"
+	"time"
+	"strings"
+	"strconv"
 
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 
 	"image/png"
-	_ "image/png" // force import the png decoder
+	_ "image/png" // Force import the png decoder
 )
 
 func cropImage(img image.Image, crop image.Rectangle) (image.Image, error) {
@@ -19,7 +22,7 @@ func cropImage(img image.Image, crop image.Rectangle) (image.Image, error) {
 		SubImage(r image.Rectangle) image.Image
 	}
 
-	// img is an Image interface. This checks if the underlying value has a
+	// Img is an Image interface. This checks if the underlying value has a
 	// method called SubImage. If it does, then we can use SubImage to crop the
 	// image.
 	simg, ok := img.(subImager)
@@ -31,21 +34,19 @@ func cropImage(img image.Image, crop image.Rectangle) (image.Image, error) {
 }
 
 func cropScreenshotToElement(rawImage []byte, xStart int, yStart int, xEnd int, yEnd int, filename string) {
-	// load pre image as image.image
+	// Load pre image as image.image
 	img, _, err := image.Decode(bytes.NewBuffer(rawImage))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(xStart)
-
-	// crop image
+	// Crop image
 	cropped, err := cropImage(img, image.Rect(xStart, yStart, xEnd, yEnd))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// save cropped one
+	// Save cropped one
 	out2, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +56,7 @@ func cropScreenshotToElement(rawImage []byte, xStart int, yStart int, xEnd int, 
 	png.Encode(out2, cropped)
 }
 
-func takeScreenshot(filename string, url string) {
+func takeScreenshot(filename string, url string) (bool) {
 	const (
 		seleniumPath     = "./selenium-server/selenium-server-standalone-3.9.1.jar"
 		chromeDriverPath = "./chromedriver_linux64/chromedriver"
@@ -72,7 +73,7 @@ func takeScreenshot(filename string, url string) {
 	}
 	defer service.Stop()
 
-	// connect to the WebDriver instance running locally
+	// Connect to the WebDriver instance running locally
 	caps := selenium.Capabilities{"browserName": "chrome"}
 	chromeCaps := chrome.Capabilities{
 		Path: "",
@@ -104,6 +105,22 @@ func takeScreenshot(filename string, url string) {
 		log.Fatal(err)
 	}
 
+	// Verify if menu date exists
+	dateElement, err := wd.FindElement(selenium.ByCSSSelector, ".cardapio .date-day")
+	if err != nil { // Date not found, probably because there is no menu "Não há cardápio cadastrado para exibição no momento."
+		return false
+	}
+
+	// Now validate if date is correct (by checking current day)
+	date, err := dateElement.Text()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if strings.Split(date, "/")[0] != strconv.Itoa(time.Now().Day()) {
+		return false
+	}
+
+	// Calculate screenshot size and location
 	elementSize, err := element.Size()
 	if err != nil {
 		log.Fatal(err)
@@ -115,6 +132,7 @@ func takeScreenshot(filename string, url string) {
 	}
 
 	heightMagicNumber := 65 + 30 + 37 - 2
-
 	cropScreenshotToElement(screenshot, location.X, location.Y-heightMagicNumber, location.X+elementSize.Width, location.Y+elementSize.Height, filename)
+
+	return true
 }

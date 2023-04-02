@@ -51,13 +51,21 @@ func uploadMedia(filename string) map[string]interface{} {
 }
 
 func sendTweet(text string, mediaIds []string) map[string]interface{} {
-	media := map[string]interface{}{
-		"media_ids": mediaIds,
-	}
+	var values map[string]interface{}
 
-	values := map[string]interface{}{
-		"text":  text,
-		"media": media,
+	if len(mediaIds) > 0 {
+		media := map[string]interface{}{
+			"media_ids": mediaIds,
+		}
+		
+		values = map[string]interface{}{
+			"text":  text,
+			"media": media,
+		}
+	} else {
+		values = map[string]interface{}{
+			"text": text,
+		}
 	}
 
 	json_data, err := json.Marshal(values)
