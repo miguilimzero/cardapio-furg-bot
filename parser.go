@@ -116,7 +116,12 @@ func takeScreenshot(filename string, url string) (bool) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if strings.Split(date, "/")[0] != strconv.Itoa(time.Now().Day()) {
+	
+	dateNumber, err := strconv.Atoi(strings.Split(date, "/")[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if dateNumber  != time.Now().Day() {
 		return false
 	}
 
